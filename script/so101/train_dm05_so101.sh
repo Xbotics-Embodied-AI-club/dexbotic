@@ -37,7 +37,8 @@ export TOKENIZERS_PARALLELISM=false
 # 不依赖 PATH 里是哪个环境的 torchrun。
 # 入口是 `tyro.cli`，覆盖走短横线旗标（`--trainer-config.x-y`），
 # 不是 DW0.5 那边的 `字段路径=值`。两个入口的覆盖语法不同。
-exec "$PY" -m torch.distributed.run --nproc_per_node="$NPROC" \
+# 端口由调用方声明：同一台机器上跑两个 torchrun 时，默认的 29500 第二个会起不来（EADDRINUSE）。
+exec "$PY" -m torch.distributed.run --nproc_per_node="$NPROC" --master_port "${DM05_MASTER_PORT:-29500}" \
   playground/dm05_so101_xbotics.py \
   --task train \
   --trainer-config.per-device-train-batch-size "$PER_DEVICE" \

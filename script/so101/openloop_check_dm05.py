@@ -97,7 +97,8 @@ def main() -> int:
         json.dumps({"model_mae": model, "hold_mae": hold, "passed": passed, "rows": rows}, indent=2)
     )
     print(
-        f"\n[开环] 平均绝对误差 模型 {model:.2f}° vs 保持不动 {hold:.2f}° ⇒ {'低于基线' if passed else '不低于基线'}"
+        f"\n[开环] 六维平均绝对误差（臂关节为度、夹爪为行程百分比）模型 {model:.2f} vs 保持不动 {hold:.2f}"
+        f" ⇒ {'低于基线' if passed else '不低于基线'}"
     )
     return 0
 

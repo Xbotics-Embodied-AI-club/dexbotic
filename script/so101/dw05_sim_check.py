@@ -5,14 +5,14 @@
 与真值逐帧比，三个参照：
 
     真动作      该轨迹真实的下一帧状态序列（训练时动作也是这么从相邻状态导出的）
-    乱动作      同一段沿时间轴翻转 —— 值域不变，只变时序
-    复制首帧    条件帧原样重复 —— 什么都不预测的分数
+    倒放动作      同一段沿时间轴翻转 —— 值域不变，只变时序
+    复制起始帧    条件帧原样重复 —— 什么都不预测的分数
 
-三组都从第 1 帧起计分：第 0 帧是条件帧，「复制首帧」在这一帧与真值逐像素相同、
+三组都从第 1 帧起计分：第 0 帧是条件帧，「复制起始帧」在这一帧与真值逐像素相同、
 PSNR 顶到上限（约 80 dB），算进平均会把这个基线抬高约 2 dB。
 
-**判据**：全部轨迹上真动作的平均 PSNR 同时高于「复制首帧」与「乱动作」，
-且逐条轨迹上真动作胜过乱动作的占多数。只高过复制首帧不够 —— 那可能只是学会了
+**判据**：全部轨迹上真动作的平均 PSNR 同时高于「复制起始帧」与「倒放动作」，
+且逐条轨迹上真动作胜过倒放动作的占多数。只高过复制起始帧不够 —— 那可能只是学会了
 「画面会动」而没按动作动。
 
 ## SO101 的排布怎么进上游 policy
@@ -247,8 +247,8 @@ def main() -> int:
         }
         rows.append(row)
         print(
-            f"[{stem}] PSNR 真动作 {row['real_action']['psnr']:.2f} · 乱动作 {row['reversed_action']['psnr']:.2f}"
-            f" · 复制首帧 {row['copy_first_frame']['psnr']:.2f}",
+            f"[{stem}] PSNR 真动作 {row['real_action']['psnr']:.2f} · 倒放动作 {row['reversed_action']['psnr']:.2f}"
+            f" · 复制起始帧 {row['copy_first_frame']['psnr']:.2f}",
             flush=True,
         )
         labels = (
@@ -300,7 +300,7 @@ def main() -> int:
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(
-        f"\n[结果] 平均 PSNR {mean} · 真动作胜乱动作 {wins}/{len(rows)} ⇒ {'通过' if passed else '未通过'}"
+        f"\n[结果] 平均 PSNR {mean} · 真动作胜倒放动作 {wins}/{len(rows)} ⇒ {'通过' if passed else '未通过'}"
     )
     return 0 if passed else 1
 

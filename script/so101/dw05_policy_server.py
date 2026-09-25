@@ -34,9 +34,9 @@ import numpy as np
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
-from playground.dw05_so101_exp import DW05_NORM_STATS
-from script.so101.dw05_sim_check import patch_policy_for_so101
-from script.so101.layout import DW05_BUNDLE
+from dexbotic.so101.dw05_exp import DW05_NORM_STATS
+from dexbotic.so101.dw05_sim_check import patch_policy_for_so101
+from dexbotic.so101.layout import DW05_BUNDLE
 
 
 def decode_image(payload: str) -> np.ndarray:

@@ -127,8 +127,9 @@ override-dependencies = [
     "numpy==1.26.4",
 ]
 
-[tool.setuptools]
-packages = ["dexbotic"]
+[tool.setuptools.packages.find]
+# 只列顶层包时，以 git 依赖非可编辑安装会丢掉全部子包。
+include = ["dexbotic*"]
 
 [tool.autopep8]
 max_line_length = 88

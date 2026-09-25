@@ -2,7 +2,7 @@
 # 目录约定只在 layout.py 里定义，这里执行它拿到 export 语句。
 PY=${PY:-python}
 # 先落进变量再 eval：`eval "$(...)"` 里的命令失败时 eval 仍返回 0，`set -e` 拦不住。
-_so101_layout=$("$PY" "$(dirname "${BASH_SOURCE[0]}")/layout.py") ||
+_so101_layout=$("$PY" -m dexbotic.so101.layout) ||
   { echo "[env] 用 PY=$PY 执行 layout.py 失败" >&2; exit 1; }
 eval "$_so101_layout"
 

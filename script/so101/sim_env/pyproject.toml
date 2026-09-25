@@ -1,0 +1,34 @@
+# 仿真侧环境。它和 Dexbotic 的训练环境装不进同一个 venv：
+# dexbotic 要 torch 2.11 + transformers 5.3 + deepspeed，ManiSkill/SAPIEN 那套是 torch 2.8。
+# 两边只通过 checkpoint 文件与 HTTP 推理服务交接。
+#
+# torch 必须钉版：so101_sim 只写 `torch>=2.6`，把 CUDA 轮子的选择留给上层项目。不钉会解到
+# PyPI 上最新的 torch，其 CUDA 版本可能高于驱动支持的版本 —— 建环境不报错，
+# 直到 `torch.cuda.init()` 才报 "driver too old"。2.8.0 在 PyPI 上的默认轮子是 cu128，
+# 驱动需支持 CUDA 12.8。
+#
+# 用法（本目录）：
+#     uv sync
+#     SIM_PY=$PWD/.venv/bin/python
+[project]
+name = "so101-sim-eval"
+version = "0"
+description = "SO101 仿真评测环境：so101_sim + 钉版 torch"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "so101_sim",
+    "torch==2.8.0",
+    "torchvision==0.23.0",
+    # 读共享 mp4（rollout 存视频、DW0.5 自检读轨迹）。av 显式声明：
+    # 不声明时 imageio 装上了却报 "The `pyav` plugin is not installed"。
+    "imageio",
+    "av",
+    # rollout 的成功率与视频上 wandb；离线模式写本地，跑完 `wandb sync` 发布。
+    "wandb",
+    # eval_dm05_so101.sh 汇总时算 Clopper-Pearson 下界。
+    "scipy",
+]
+
+[tool.uv.sources]
+# 仿真的动作口径与单局步数是实验身份的一部分，钉 commit 而不是分支。
+so101_sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "5145236aa1cd89c3b216356b21b46af157c82e5f" }

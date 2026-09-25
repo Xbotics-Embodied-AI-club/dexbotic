@@ -118,7 +118,7 @@ so101-sim = [
 # fail loudly — it just runs different physics. Pin a sha rather than a branch:
 # the simulator's action semantics and episode budget are part of an experiment's
 # identity, so they must not move under a rerun.
-so101-sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "5145236aa1cd89c3b216356b21b46af157c82e5f" }
+so101-sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "1510eeec6251b0de6948faff827804706b71eab9" }
 
 # so101_sim declares numpy>=2, while dexbotic and nptyping pin numpy==1.26.4.
 # The override keeps the one combination that has actually been run.

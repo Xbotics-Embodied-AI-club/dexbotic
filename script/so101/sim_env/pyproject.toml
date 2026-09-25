@@ -31,4 +31,4 @@ dependencies = [
 
 [tool.uv.sources]
 # 仿真的动作口径与单局步数是实验身份的一部分，钉 commit 而不是分支。
-so101_sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "5145236aa1cd89c3b216356b21b46af157c82e5f" }
+so101_sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "1510eeec6251b0de6948faff827804706b71eab9" }

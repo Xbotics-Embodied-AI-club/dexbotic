@@ -8,6 +8,9 @@
     乱动作      同一段沿时间轴翻转 —— 值域不变，只变时序
     复制首帧    条件帧原样重复 —— 什么都不预测的分数
 
+三组都从第 1 帧起计分：第 0 帧是条件帧，「复制首帧」在这一帧与真值逐像素相同、
+PSNR 顶到上限（约 80 dB），算进平均会把这个基线抬高约 2 dB。
+
 **判据**：全部轨迹上真动作的平均 PSNR 同时高于「复制首帧」与「乱动作」，
 且逐条轨迹上真动作胜过乱动作的占多数。只高过复制首帧不够 —— 那可能只是学会了
 「画面会动」而没按动作动。
@@ -217,26 +220,30 @@ def main() -> int:
             for i in truth_idx
         ]
         init = policy._image_tensor_from_arrays([cams[v][0] for v in VIEWS])
-        action_real = states[1 : 1 + needed].copy()
+        # 整局都传进去，只推前 `--rollouts` 轮：上游按序列长度定「局尾」终止位，
+        # 只传前 96 步会把第 81 步起标成局尾，而训练时这些步离局尾还远。
+        # 状态也逐步传：每轮的动作增量与本体状态都以该轮起点为基准，与训练时一致。
+        action_real = states[1:].copy()
+        action_reversed = np.concatenate([action_real[:needed][::-1], action_real[needed:]])
         preds = {}
         for name, action in (
             ("real_action", action_real),
-            ("reversed_action", action_real[::-1].copy()),
+            ("reversed_action", action_reversed),
         ):
             preds[name] = policy.rollout_video_with_actions(
                 prompt=prompt,
                 init_image_tensor=init,
                 action_abs=action,
-                state_abs=states[0],
+                state_abs=states[: len(action)],
                 max_rollouts=args.rollouts,
                 fps_stride=FPS_STRIDE,
             )
         row = {
             "clip": stem,
             "prompt": prompt,
-            "real_action": score(preds["real_action"], truth),
-            "reversed_action": score(preds["reversed_action"], truth),
-            "copy_first_frame": score([truth[0]] * len(truth), truth),
+            "real_action": score(preds["real_action"][1:], truth[1:]),
+            "reversed_action": score(preds["reversed_action"][1:], truth[1:]),
+            "copy_first_frame": score([truth[0]] * (len(truth) - 1), truth[1:]),
         }
         rows.append(row)
         print(

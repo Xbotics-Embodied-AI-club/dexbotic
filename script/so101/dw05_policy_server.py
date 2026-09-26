@@ -35,7 +35,12 @@ import numpy as np
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
 from dexbotic.so101.dw05_exp import DW05_NORM_STATS
-from dexbotic.so101.dw05_sim_check import patch_policy_for_so101
+from dexbotic.so101.dw05_policy import (
+    ACTION_HORIZON,
+    NUM_INFERENCE_STEPS,
+    SEED,
+    patch_policy_for_so101,
+)
 from dexbotic.so101.layout import DW05_BUNDLE
 
 
@@ -130,9 +135,9 @@ def main() -> int:
     ap.add_argument("--norm-stats", default=DW05_NORM_STATS)
     ap.add_argument("--port", type=int, default=7892)
     ap.add_argument("--device", default="cuda:0")
-    ap.add_argument("--action-horizon", type=int, default=32)
-    ap.add_argument("--num-inference-steps", type=int, default=10)
-    ap.add_argument("--seed", type=int, default=1234)
+    ap.add_argument("--action-horizon", type=int, default=ACTION_HORIZON)
+    ap.add_argument("--num-inference-steps", type=int, default=NUM_INFERENCE_STEPS)
+    ap.add_argument("--seed", type=int, default=SEED)
     args = ap.parse_args()
 
     dw05_policy = patch_policy_for_so101()

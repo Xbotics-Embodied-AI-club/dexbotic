@@ -8,8 +8,8 @@
 训练充分的模型远低于基线（完整配方 1000 步时约为基线的七成）；短程训练的模型
 可能只是略低于基线，那也算过。模型高于基线时，先查链路（首步误差应只有一两度）再查训练。
 
-用法（仓根，仿真侧环境即可，只用 numpy / av / urllib）：
-    $SIM_PY script/so101/openloop_check_dm05.py --endpoint http://127.0.0.1:7891/v1/infer \\
+用法（装了 dexbotic 的环境）：
+    python -m dexbotic.so101.openloop_check --endpoint http://127.0.0.1:7891/v1/infer \\
         --jsonl $SO101_DATASETS_DIR/so101-dexdata/jsonl/sim_cube40_ep00000.jsonl --out <json>
 """
 
@@ -23,7 +23,7 @@ import av
 import numpy as np
 
 # 同一个请求函数：量的就是评测走的那条链。
-from dexbotic.so101.client import request_actions
+from dexbotic.so101.client import IMAGE_SLOTS, request_actions
 from dexbotic.so101.layout import DATASETS_DIR
 
 
@@ -60,7 +60,7 @@ def main() -> int:
         action = np.asarray([r["action"] for r in recs], dtype=np.float32)
         starts = [s for s in args.starts if s + args.horizon <= len(recs)]
         cams = {}
-        for slot, name in (("images_1", "top"), ("images_2", "wrist")):
+        for slot, name in ((f"images_{i}", name) for i, name in enumerate(IMAGE_SLOTS, start=1)):
             wanted = {recs[s][slot]["frame_idx"] for s in starts}
             got = frames_at(args.image_root / recs[0][slot]["url"], wanted)
             cams[name] = {s: got[recs[s][slot]["frame_idx"]] for s in starts}

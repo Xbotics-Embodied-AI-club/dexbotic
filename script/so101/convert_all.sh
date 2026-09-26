@@ -32,4 +32,4 @@ for task in "$REAL"/*/; do
 done
 
 echo "[convert] 共 $(( ${#ARGS[@]} / 4 )) 个来源 → $D/so101-dexdata"
-exec "$PY" "$HERE/lerobot_v3_to_dexdata.py" --out "$D/so101-dexdata" --image-root "$D" "${ARGS[@]}"
+exec "$PY" -m dexbotic.so101.lerobot_v3_to_dexdata --out "$D/so101-dexdata" --image-root "$D" "${ARGS[@]}"

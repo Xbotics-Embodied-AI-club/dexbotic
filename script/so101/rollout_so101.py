@@ -8,7 +8,7 @@ Dexbotic 要 torch 2.11 + transformers 5.3。所以本脚本只跑在仿真那�
 `POST /v1/infer`）。
 
     # 训练侧环境：起推理服务
-    CUDA_VISIBLE_DEVICES=0 $PY playground/dm05_so101_xbotics.py --task inference \\
+    CUDA_VISIBLE_DEVICES=0 $PY -m dexbotic.so101.dm05_exp --task inference \\
         --model-config.model-name-or-path <checkpoint>
     # 仿真侧环境：跑评测
     CUDA_VISIBLE_DEVICES=1 $SIM_PY script/so101/rollout_so101.py --out <目录> \\
@@ -44,23 +44,18 @@ import time
 
 import numpy as np
 
-from dexbotic.so101.client import (  # noqa: F401
+from dexbotic.so101.client import (
     IMAGE_SLOTS,
-    read_frames,
+    SCENES,
+    episode_stem,
     request_actions,
+    save_episode,
 )
 
-TASKS = {
-    "cube40": "SO101PickPlaceCube40-v1",
-    "cube20": "SO101PickPlaceCube20-v1",
-    "cylinder40": "SO101PickPlaceCylinder40-v1",
-}
+#: 场景简称 → 注册名（`client.SCENES` 的反查）。
+TASKS = {short: task for task, short in SCENES.items()}
 #: 数据集录的是绝对关节角，环境必须用这个控制模式。
 CONTROL_MODE = "pd_joint_pos"
-
-
-
-
 
 
 def to_absolute(chunk: np.ndarray, state: np.ndarray, action_mode: str) -> np.ndarray:
@@ -125,15 +120,6 @@ def run_episode(
         if success or steps >= max_steps:
             break
     return success, traj, steps
-
-
-def save_mp4(path: pathlib.Path, frames: list[np.ndarray], fps: int) -> None:
-    """存一集的 rollout 视频。"""
-    import imageio.v3 as iio
-
-    iio.imwrite(str(path), np.stack(frames), fps=fps, codec="libx264")
-
-
 
 
 def main() -> int:
@@ -233,15 +219,11 @@ def main() -> int:
             successes.append(success)
             step_counts.append(steps)
             tag = "success" if success else "fail"
-            clip_path = video_dir / f"{args.label}_{scene}_ep{episode:03d}_{tag}.mp4"
-            save_mp4(clip_path, traj["top"], args.fps)
-            save_mp4(clip_path.with_name(clip_path.stem + "_wrist.mp4"), traj["wrist"], args.fps)
-            np.savez(
-                clip_path.with_suffix(".npz"),
-                state=np.stack(traj["state"]),
-                action=np.stack(traj["action"]),
-                prompt=prompt,
+            stem = episode_stem(args.label, scene, episode, success)
+            save_episode(
+                video_dir, stem, traj["top"], traj["wrist"], traj["state"], traj["action"], prompt, args.fps
             )
+            clip_path = video_dir / f"{stem}.mp4"
             if len(clips[tag]) < max(1, args.log_videos // 2):
                 clips[tag].append(clip_path)
             print(

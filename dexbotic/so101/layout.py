@@ -6,6 +6,7 @@
 
     $SO101_ROOT/
     ├── datasets/   SO101_DATASETS_DIR  原始 LeRobot 数据与转换出的 dexdata
+    │                                  （SO101_DEXDATA_DIR，默认其下 so101-dexdata/）
     ├── weights/    SO101_WEIGHTS_DIR   下载的底座权重（DW05_BUNDLE 默认在这下面）
     └── runs/       SO101_RUNS_ROOT     训练产物：存点、归一化统计、日志
 
@@ -17,6 +18,8 @@ import shlex
 
 ROOT = os.environ.get("SO101_ROOT", os.path.expanduser("~/so101_workspace"))
 DATASETS_DIR = os.environ.get("SO101_DATASETS_DIR", f"{ROOT}/datasets")
+#: 转换出的 dexdata；两个模型的训练都读它。jsonl 在其下 jsonl/，视频 url 相对 DATASETS_DIR。
+DEXDATA_DIR = os.environ.get("SO101_DEXDATA_DIR", f"{DATASETS_DIR}/so101-dexdata")
 WEIGHTS_DIR = os.environ.get("SO101_WEIGHTS_DIR", f"{ROOT}/weights")
 RUNS_ROOT = os.environ.get("SO101_RUNS_ROOT", f"{ROOT}/runs")
 DW05_BUNDLE = os.environ.get("DW05_BUNDLE", f"{WEIGHTS_DIR}/DW05-Robotwin")
@@ -27,6 +30,7 @@ if __name__ == "__main__":
     for name, value in (
         ("SO101_ROOT", ROOT),
         ("SO101_DATASETS_DIR", DATASETS_DIR),
+        ("SO101_DEXDATA_DIR", DEXDATA_DIR),
         ("SO101_WEIGHTS_DIR", WEIGHTS_DIR),
         ("SO101_RUNS_ROOT", RUNS_ROOT),
         ("DW05_BUNDLE", DW05_BUNDLE),

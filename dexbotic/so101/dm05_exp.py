@@ -41,7 +41,7 @@ from dexbotic.exp.dm05_exp import DM05InferenceConfig as _DM05InferenceConfig
 from dexbotic.exp.dm05_exp import DM05ModelConfig as _DM05ModelConfig
 from dexbotic.exp.dm05_exp import DM05OptimizerConfig as _DM05OptimizerConfig
 from dexbotic.exp.dm05_exp import DM05TrainerConfig as _DM05TrainerConfig
-from dexbotic.so101.layout import DATASETS_DIR, RUNS_ROOT, WEIGHTS_DIR
+from dexbotic.so101.layout import DATASETS_DIR, DEXDATA_DIR, RUNS_ROOT, WEIGHTS_DIR
 
 DM05_RUN_DIR = f"{RUNS_ROOT}/dm05_so101"
 #: SO101 单臂 5 关节 + 1 夹爪。与 `RobotType.SO101` 的状态描述一致。
@@ -53,7 +53,7 @@ class DM05DataConfig(_DM05DataConfig):
     """指向 `convert_all.sh` 转出的 dexdata，其余沿用上游 SO101 注册。"""
 
     dataset_name: str = field(default="so101_pick_cube")
-    jsonl_dir: str | None = field(default=f"{DATASETS_DIR}/so101-dexdata/jsonl")
+    jsonl_dir: str | None = field(default=f"{DEXDATA_DIR}/jsonl")
     # dexdata 里视频的 `url` 是相对这个根的，与转换时的 `--image-root` 必须同值。
     image_dir: str | None = field(default=DATASETS_DIR)
     action_mode: ActionMode = field(default=ActionMode.RELATIVE)

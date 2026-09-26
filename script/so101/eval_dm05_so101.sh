@@ -39,7 +39,7 @@ mkdir -p "$OUT"
 
 pids=()
 for i in 0 1 2; do
-  CUDA_VISIBLE_DEVICES=${GPUS[$i]} "$PY" playground/dm05_so101_xbotics.py --task inference \
+  CUDA_VISIBLE_DEVICES=${GPUS[$i]} "$PY" -m dexbotic.so101.dm05_exp --task inference \
     --model-config.model-name-or-path "$CKPT" --inference-config.port "$((PORT_BASE + i))" \
     > "$OUT/server_${SCENES[$i]}.log" 2>&1 &
   pids+=($!)
@@ -57,7 +57,8 @@ echo "[eval] 三个服务就绪 $(date -Is)"
 
 sims=()
 for i in 0 1 2; do
-  CUDA_VISIBLE_DEVICES=${SIM_GPUS[$i]} "$SIM_PY" -W ignore script/so101/rollout_so101.py \
+  # 仿真环境里没装 dexbotic；rollout 要用 dexbotic.so101.client，按仓根导入（它只依赖 numpy / av）。
+  CUDA_VISIBLE_DEVICES=${SIM_GPUS[$i]} PYTHONPATH="$PWD" "$SIM_PY" -W ignore script/so101/rollout_so101.py \
     --out "$OUT/${SCENES[$i]}" --endpoint "http://127.0.0.1:$((PORT_BASE + i))/v1/infer" \
     --label "$LABEL" --action-mode absolute --episodes "$N" --scenes "${SCENES[$i]}" --replan "${REPLAN:-25}" \
     --wandb-mode offline > "$OUT/rollout_${SCENES[$i]}.log" 2>&1 &

@@ -15,92 +15,34 @@ PSNR 顶到上限（约 80 dB），算进平均会把这个基线抬高约 2 dB�
 且逐条轨迹上真动作胜过倒放动作的占多数。只高过复制起始帧不够 —— 那可能只是学会了
 「画面会动」而没按动作动。
 
-## SO101 的排布怎么进上游 policy
+上游 policy 换成 SO101 训练口径的那一步见 `dexbotic.so101.dw05_policy`。本工具只报告数字、始终退 0；
+上面的判据写进结果 json 的 `passed`，供研究线核对，不当作程序的成败。
 
-`DW05RobotWinPolicy` 把 RobotWin 的状态排布与「不做 delta 的维」写成模块常量。
-这里在构造前把它们换成训练时的 SO101 值（与 `playground/dw05_so101_exp.py` 同一份），
-上游代码不改。换错不报错，只会把关节喂进错的槽位 —— 所以直接从训练配置 `dw05_exp` 导入，不抄一份。
-
-用法：
+用法（`--rollout-dir` 下按任意层级找录像，逐场景一个子目录或全在一个 `videos/` 下都行）：
     CUDA_VISIBLE_DEVICES=0 python -m dexbotic.so101.dw05_sim_check --checkpoint <weights/step_xxxxxx.pt> \\
-        --rollout-dir <rollout_so101.py 的 --out> --out <目录>
+        --rollout-dir <rollout 的输出目录> --out <目录>
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import pathlib
 
 import numpy as np
 
-from dexbotic.so101.client import read_frames
-from dexbotic.so101.dw05_exp import (
-    DW05_NORM_STATS,
-    SO101_NON_DELTA_MASK,
-    SO101_STATE_ARRANGEMENT,
+from dexbotic.so101.client import SCENES, read_frames
+from dexbotic.so101.dw05_exp import DW05_NORM_STATS
+from dexbotic.so101.dw05_policy import (
+    ACTION_HORIZON,
+    FPS_STRIDE,
+    NUM_INFERENCE_STEPS,
+    NUM_VIDEO_FRAMES,
+    SEED,
+    VIEWS,
+    patch_policy_for_so101,
 )
 from dexbotic.so101.layout import DW05_BUNDLE
-
-ACTION_HORIZON = 32
-FPS_STRIDE = 4
-NUM_VIDEO_FRAMES = 9
-SEED = 1234
-#: 训练时的三路视图：top + wrist + wrist，见 dw05_so101_exp.py 的 images_keys。
-VIEWS = ("top", "wrist", "wrist")
-
-
-def patch_policy_for_so101():
-    """把上游 policy 的 RobotWin 常量换成 SO101 的训练口径。
-
-    Returns:
-        打过补丁的 `dexbotic.policy.dw05_policy` 模块。
-    """
-    from dexbotic.policy import dw05_policy
-
-    # 训练时 70% 的样本 prompt 就是原样的任务指令；不套 RobotWin 的模板。
-    os.environ["DEPLOY_USE_DEFAULT_PROMPT"] = "0"
-
-    dw05_policy.ROBOTWIN_STATE_ARRANGEMENT = list(SO101_STATE_ARRANGEMENT)
-    # NON_DELTA_MASK 给的是排布后的槽位；policy 在原始维上判，换回原始维号。
-    dw05_policy.ROBOTWIN_NON_DELTA_DIMS = [
-        SO101_STATE_ARRANGEMENT[slot] for slot in SO101_NON_DELTA_MASK
-    ]
-    dw05_policy.ROBOTWIN_VALID_ARRANGED_DIMS = [
-        i for i, src in enumerate(SO101_STATE_ARRANGEMENT) if src >= 0
-    ]
-
-    # 本体状态（proprio）在训练时**没有归一化**：`ActionNormMultiDataset` 只归一化 norm_stats
-    # 里有的键，而 compute_norm_stats 只产了 `action`；proprio 由 `AddProprioTrajectory`
-    # 直接从排布后的原始状态（度 + 终止位）切窗口。上游 policy 却按 RobotWin 的习惯把 state
-    # 做分位数归一化 —— 照搬就是喂给模型一个训练时从没见过的量纲，不报错。
-    # ⇒ 推理这一侧也不归一化：排布 → 补终止位 0 → 取模型宽度，与训练逐步一致。
-    import torch
-
-    def normalize_state_like_training(self, raw_state):
-        raw_state = np.asarray(raw_state, dtype=np.float32).reshape(-1)
-        with_term = np.concatenate(
-            [dw05_policy._arrange_raw_state(raw_state), np.zeros(1, dtype=np.float32)]
-        )
-        value = dw05_policy._select_model_dims(with_term, self.proprio_dim)
-        return (
-            torch.from_numpy(value)
-            .unsqueeze(0)
-            .to(device=self.model.device, dtype=self.model.torch_dtype)
-        )
-
-    dw05_policy.DW05RobotWinPolicy.normalize_state = normalize_state_like_training
-    # policy 构造时硬要求 stats 里有 `state`；它在上面已被绕开、不会被读，给一个占位让构造通过。
-    original_load = dw05_policy._load_norm_stats
-
-    def load_with_state_placeholder(path):
-        stats = original_load(path)
-        stats.setdefault("state", stats["action"])
-        return stats
-
-    dw05_policy._load_norm_stats = load_with_state_placeholder
-    return dw05_policy
 
 
 def as_rgb(frame) -> np.ndarray:
@@ -164,15 +106,15 @@ def main() -> int:
 
     needed = args.rollouts * ACTION_HORIZON
     picked: list[pathlib.Path] = []
-    for scene in ("cube40", "cube20", "cylinder40"):
+    for scene in SCENES.values():
         clips = [
             p
-            for p in sorted((args.rollout_dir / "videos").glob(f"*_{scene}_ep*.npz"))
+            for p in sorted(args.rollout_dir.rglob(f"*_{scene}_ep*.npz"))
             if len(np.load(p)["state"]) > needed
         ]
         picked += clips[: args.per_scene]
     if not picked:
-        raise SystemExit(f"{args.rollout_dir}/videos 下没有长于 {needed} 步的轨迹")
+        raise SystemExit(f"{args.rollout_dir} 下没有长于 {needed} 步的轨迹")
 
     policy = dw05_policy.DW05RobotWinPolicy(
         dw05_policy.DW05RobotWinPolicyConfig(
@@ -182,7 +124,7 @@ def main() -> int:
             device=args.device,
             mixed_precision="bf16",
             action_horizon=ACTION_HORIZON,
-            num_inference_steps=10,
+            num_inference_steps=NUM_INFERENCE_STEPS,
             num_video_frames=NUM_VIDEO_FRAMES,
             seed=SEED,
             raw_state_dim=6,
@@ -301,7 +243,7 @@ def main() -> int:
         f" · 倒放动作 {mean['reversed_action']:.2f} dB"
         f" · 复制起始帧 {mean['copy_first_frame']:.2f} dB · 逐条比较真实动作胜倒放 {wins}/{len(rows)}"
     )
-    return 0 if passed else 1
+    return 0
 
 
 if __name__ == "__main__":

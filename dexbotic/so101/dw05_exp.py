@@ -58,9 +58,8 @@ from dexbotic.exp.dw05_exp import (
 )
 from dexbotic.exp.dw05_trainer import DW05Trainer as _DW05Trainer
 from dexbotic.model.dw05 import DW05ModelConfig as _DW05ModelConfig
-from dexbotic.so101.layout import DATASETS_DIR, RUNS_ROOT
+from dexbotic.so101.layout import DATASETS_DIR, DEXDATA_DIR, RUNS_ROOT
 
-DEXDATA_ROOT = f"{DATASETS_DIR}/so101-dexdata"
 DW05_RUN_DIR = f"{RUNS_ROOT}/dw05_so101"
 #: `--task compute_norm_stats` 的产物；训练与 `dw05_sim_check.py` 都读它。
 DW05_NORM_STATS = f"{DW05_RUN_DIR}/norm_stats/norm_stats.json"
@@ -122,7 +121,7 @@ class So101DataConfig(_DW05DataConfig):
     # recipe 只是个名字：给出 annotations 后真正的来源走内联条目（名为 dw05_local），
     # 但 base_dw_exp.build_data 仍要求 recipe 非空，所以这里对齐成同一个名字。
     recipe: str = field(default="dw05_local")
-    annotations: str = field(default=f"{DEXDATA_ROOT}/jsonl")
+    annotations: str = field(default=f"{DEXDATA_DIR}/jsonl")
     # 记录里的视频 url 是相对这个根的，与转换时的 `--image-root` 必须同值。
     data_path_prefix: str = field(default=DATASETS_DIR)
     index_path_prefix: str = field(default="")
@@ -134,7 +133,7 @@ class So101DataConfig(_DW05DataConfig):
     # 不改成 `"error"`：缺失可以在线补（补出文件放进训练读的缓存目录，下次查找即命中，
     # 不必重启），而 `"error"` 会让一条没见过的 prompt 在任意时刻打断整轮训练。
     # 所以训练日志里 `Missing text embedding` 的条数应当是 0，非零就补算缓存。
-    text_embedding_cache_dir: str = field(default=f"{DEXDATA_ROOT}/text_embeddings")
+    text_embedding_cache_dir: str = field(default=f"{DEXDATA_DIR}/text_embeddings")
     missing_text_embedding: str = field(default="zero")
     # 由 `--task compute_norm_stats` 先生成；维度必须等于 len(state_arrangement)+1 = 17。
     norm_stats_path: str = field(default=DW05_NORM_STATS)

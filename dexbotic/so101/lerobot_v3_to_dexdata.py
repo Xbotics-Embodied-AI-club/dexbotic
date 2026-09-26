@@ -71,7 +71,7 @@ jsonl 文件名带来源前缀，避免两边的 `episode_00000` 撞名。
 
 日常用 `convert_all.sh` 一次转全部来源；单独调用时：
     D=$SO101_DATASETS_DIR
-    $PY script/so101/lerobot_v3_to_dexdata.py --image-root $D --out $D/so101-dexdata \\
+    $PY -m dexbotic.so101.lerobot_v3_to_dexdata --image-root $D --out $D/so101-dexdata \\
         --source $D/so101-sim-640-v2/cube40  --name sim_cube40 \\
         --source $D/so101-sim-640-v2/cube20  --name sim_cube20
 """
@@ -270,7 +270,7 @@ def convert_source(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
         "--out",
@@ -297,7 +297,7 @@ def main() -> int:
         required=True,
         help="与 --source 一一对应的来源名，用作 jsonl 文件名前缀",
     )
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if len(args.source) != len(args.name):
         raise SystemExit(

@@ -43,7 +43,7 @@ export TOKENIZERS_PARALLELISM=false
 
 if [ "$TASK" = "compute_norm_stats" ] || [ "$TASK" = "smoke" ]; then
   # 统计要在一份数据上串行累计，多进程各算一份会得到不完整的统计。
-  exec "$PY" playground/dw05_so101_exp.py --task "$TASK" "$@"
+  exec "$PY" -m dexbotic.so101.dw05_exp --task "$TASK" "$@"
 fi
 
 # 端口显式给：与 DM0.5 同机并行时两边默认都是 29500，accelerate 撞了会自己挪，
@@ -52,6 +52,6 @@ exec "$PY" -m accelerate.commands.launch \
   --config_file script/dw/accelerate_zero1_ds.yaml \
   --num_processes "$NPROC" \
   --main_process_port "${DW05_MASTER_PORT:-29520}" \
-  playground/dw05_so101_exp.py \
+  -m dexbotic.so101.dw05_exp \
   --task "$TASK" \
   "$@"

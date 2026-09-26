@@ -30,7 +30,7 @@ _fingerprint() {  # 输出 "<文件数> <总字节>"，目录不存在时输出 
 # 训练在跑时不许删重搬：重搬的第一步是 `rm -rf`，训练会在删掉到拷回之间读不到文件，
 # 崩在 dataloader 里，等去看时文件又回来了。一致时什么都不动，所以训练中途跑一次做校验是安全的。
 _training_running() {
-  pgrep -f "dm05_so101_xbotics.py" >/dev/null 2>&1 || pgrep -f "dw05_so101_exp.py" >/dev/null 2>&1
+  pgrep -f "dexbotic.so101.d[mw]05_exp" >/dev/null 2>&1
 }
 
 mkdir -p "$DST"

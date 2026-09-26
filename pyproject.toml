@@ -75,6 +75,9 @@ dependencies = [
     "shortuuid",
     "openpyxl",
     "debugpy",
+    # dexbotic.so101 直接用到的两个包（实验配置的命令行入口、录像读写）。
+    "tyro",
+    "imageio",
     "loguru",
 
     # Code formatting and linting
@@ -100,31 +103,6 @@ dependencies = [
 attention = [
     "flash_attn",
     "xformers"
-]
-
-# SO101 simulation stack. Optional because it drags in ManiSkill3 / SAPIEN, which
-# want a GPU and are pointless for anyone who only runs inference against a served
-# model. Nothing has to be fetched beforehand — see [tool.uv.sources].
-# Install with: uv sync --extra so101-sim
-so101-sim = [
-    "so101-sim",
-]
-
-[tool.uv.sources]
-# The simulator is resolved straight from its own repository, pinned to a commit.
-# It used to be a vendored copy under `playground/so101_sim`; that copy silently
-# fell behind the released simulator (no `control_mode` plumbing, no `*Train-v1`
-# RL twins, under-declared runtime deps), and a stale vendored simulator does not
-# fail loudly — it just runs different physics. Pin a sha rather than a branch:
-# the simulator's action semantics and episode budget are part of an experiment's
-# identity, so they must not move under a rerun.
-so101-sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "1510eeec6251b0de6948faff827804706b71eab9" }
-
-# so101_sim declares numpy>=2, while dexbotic and nptyping pin numpy==1.26.4.
-# The override keeps the one combination that has actually been run.
-[tool.uv]
-override-dependencies = [
-    "numpy==1.26.4",
 ]
 
 [tool.setuptools.packages.find]

@@ -106,8 +106,12 @@ attention = [
 # want a GPU and are pointless for anyone who only runs inference against a served
 # model. Nothing has to be fetched beforehand — see [tool.uv.sources].
 # Install with: uv sync --extra so101-sim
+# LeRobot is the robot interface (HAL) for both the simulator and the real arm:
+# `dexbotic.so101.rollout` drives any LeRobot robot through get_observation() /
+# send_action(). Only its robots / motors / cameras layers are used.
 so101-sim = [
     "so101-sim",
+    "lerobot[feetech]",
 ]
 
 [tool.uv.sources]
@@ -119,6 +123,8 @@ so101-sim = [
 # the simulator's action semantics and episode budget are part of an experiment's
 # identity, so they must not move under a rerun.
 so101-sim = { git = "https://github.com/Xbotics-Embodied-AI-club/Xbotics-SO101-Sim.git", rev = "1510eeec6251b0de6948faff827804706b71eab9" }
+# The Xbotics-maintained LeRobot fork, pinned for the same reason as the simulator.
+lerobot = { git = "https://github.com/Xbotics-Embodied-AI-club/lerobot.git", rev = "9381726d2a99f1da8f822ab0917246106d6f8d7c" }
 
 # so101_sim declares numpy>=2, while dexbotic and nptyping pin numpy==1.26.4.
 # The override keeps the one combination that has actually been run.

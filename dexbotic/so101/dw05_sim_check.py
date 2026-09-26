@@ -297,7 +297,9 @@ def main() -> int:
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(
-        f"\n[结果] 平均 PSNR {mean} · 真动作胜倒放动作 {wins}/{len(rows)} ⇒ {'通过' if passed else '未通过'}"
+        f"\n[结果] 平均 PSNR：真实动作 {mean['real_action']:.2f} dB"
+        f" · 倒放动作 {mean['reversed_action']:.2f} dB"
+        f" · 复制起始帧 {mean['copy_first_frame']:.2f} dB · 逐条比较真实动作胜倒放 {wins}/{len(rows)}"
     )
     return 0 if passed else 1
 
